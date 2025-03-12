@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Eye Tracker</title>
+    <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+    <style>
+        #gazeDot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webcam Eye Tracker PoC</h1>
+    <p>Look around, and the red dot will follow your gaze!</p>
+    <div id="gazeDot"></div>
+
+    <script>
+        // Start WebGazer
+        webgazer.setGazeListener((data, elapsedTime) => {
+            if (data) {
+                const gazeDot = document.getElementById('gazeDot');
+                gazeDot.style.left = data.x + 'px';
+                gazeDot.style.top = data.y + 'px';
+            }
+        }).begin();
+    </script>
+</body>
+</html>
