@@ -13,23 +13,65 @@
             background-color: red;
             border-radius: 50%;
             pointer-events: none;
+            display: none; /* Initially hidden */
         }
     </style>
 </head>
 <body>
     <h1>Webcam Eye Tracker PoC</h1>
-    <p>Look around, and the red dot will follow your gaze!</p>
+    <p>Look around, and the red dot will follow your gaze! Blink to trigger an event.</p>
     <div id="gazeDot"></div>
 
     <script>
-        // Start WebGazer
+        let lastBlinkTime = 0;
+        const blinkThreshold = 300; // Minimum time (ms) between blinks
+        const gazeDot = document.getElementById('gazeDot');
+
+        function handleBlink() {
+            console.log("Blink detected!");
+            const blinkEvent = new Event("userBlink");
+            document.dispatchEvent(blinkEvent);
+        }
+
+        document.addEventListener("userBlink", () => {
+            alert("Blink event fired!");
+        });
+
+        // Ensure WebGazer starts correctly
         webgazer.setGazeListener((data, elapsedTime) => {
             if (data) {
-                const gazeDot = document.getElementById('gazeDot');
                 gazeDot.style.left = data.x + 'px';
                 gazeDot.style.top = data.y + 'px';
+                gazeDot.style.display = "block"; // Show dot once tracking starts
             }
-        }).begin();
+        }).begin()
+          .then(() => console.log("WebGazer initialized"))
+          .catch(err => console.error("WebGazer failed:", err));
+
+        // Improved Blink Tracking
+        function trackBlink() {
+            webgazer.getCurrentPrediction().then(prediction => {
+                if (prediction) {
+                    webgazer.getEyeFeatures().then(eyeData => {
+                        if (eyeData) {
+                            const leftEye = eyeData.left.openness;
+                            const rightEye = eyeData.right.openness;
+
+                            if (leftEye < 0.2 && rightEye < 0.2) {
+                                const now = Date.now();
+                                if (now - lastBlinkTime > blinkThreshold) {
+                                    handleBlink();
+                                    lastBlinkTime = now;
+                                }
+                            }
+                        }
+                    });
+                }
+                requestAnimationFrame(trackBlink);
+            });
+        }
+
+        setTimeout(trackBlink, 3000); // Wait a bit for WebGazer to initialize
     </script>
 </body>
 </html>
